@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${modoEdicao} ? 'Editar Música' : 'Cadastrar Música'">Cadastrar Música</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="${basePath + '/musicas'}">Cifras Igreja</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div id="navbarPrincipal" class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="${basePath + '/musicas'}">Músicas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${!modoEdicao} ? ' active' : ''"
+                       th:href="${basePath + '/musicas/nova'}">
+                        Cadastrar Música
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#">Calendário</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+        <h1 class="h3 mb-0" th:text="${modoEdicao} ? 'Editar Música' : 'Cadastrar Música'">
+            Cadastrar Música
+        </h1>
+
+        <a th:href="${basePath + '/musicas'}" class="btn btn-outline-secondary btn-sm">
+            Voltar
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+
+            <form th:action="${modoEdicao} ? ${basePath + '/musicas/' + musica.id + '/editar'} : ${basePath + '/musicas'}"
+                  th:object="${musica}"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome da música *</label>
+                    <input type="text"
+                           id="nome"
+                           th:field="*{nome}"
+                           class="form-control"
+                           placeholder="Ex: Bondade de Deus">
+
+                    <div class="text-danger small mt-1"
+                         th:if="${#fields.hasErrors('nome')}"
+                         th:errors="*{nome}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tom" class="form-label">Tom</label>
+                    <input type="text"
+                           id="tom"
+                           th:field="*{tom}"
+                           class="form-control"
+                           placeholder="Ex: G, A, C#m, Bb">
+                </div>
+
+                <div class="mb-3">
+                    <label for="linkYoutube" class="form-label">Link do YouTube</label>
+                    <input type="url"
+                           id="linkYoutube"
+                           th:field="*{linkYoutube}"
+                           class="form-control"
+                           placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+
+                <div class="mb-3" th:if="${modoEdicao}">
+                    <label class="form-label">Cifra atual</label>
+
+                    <div th:if="${musica.caminhoArquivoCifra != null && !musica.caminhoArquivoCifra.isBlank()}">
+                        <a th:href="${basePath + musica.caminhoArquivoCifra}"
+                           target="_blank"
+                           class="btn btn-outline-primary btn-sm">
+                            Abrir cifra atual
+                        </a>
+                    </div>
+
+                    <div th:if="${musica.caminhoArquivoCifra == null || musica.caminhoArquivoCifra.isBlank()}"
+                         class="text-muted small">
+                        Sem cifra cadastrada.
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="arquivoCifra" class="form-label">
+                        <span th:text="${modoEdicao} ? 'Nova cifra em PDF' : 'Cifra em PDF'">
+                            Cifra em PDF
+                        </span>
+                    </label>
+
+                    <input type="file"
+                           id="arquivoCifra"
+                           name="arquivoCifra"
+                           class="form-control"
+                           accept="application/pdf">
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <span th:text="${modoEdicao} ? 'Salvar Alterações' : 'Salvar Música'">
+                        Salvar Música
+                    </span>
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
