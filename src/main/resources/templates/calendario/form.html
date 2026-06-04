@@ -71,29 +71,7 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="${basePath + '/musicas'}">Cifras Igreja</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div id="navbarPrincipal" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/musicas'}">Músicas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/musicas/nova'}">Cadastrar Música</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" th:href="${basePath + '/calendario'}">Calendário</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar('musicas')}"></div>
 
 <main class="container py-4">
 
@@ -185,7 +163,7 @@
                         <div class="music-list" id="listaMusicas">
                             <div class="music-option"
                                  th:each="musica : ${musicas}"
-                                 th:attr="data-nome=${#strings.toLowerCase(musica.nome)}, data-tom=${musica.tom != null ? #strings.toLowerCase(musica.tom) : ''}">
+                                 th:attr="data-nome=${#strings.toLowerCase(musica.nome)}, data-tom=${musica.tom != null ? #strings.toLowerCase(musica.tom) : ''}, data-cantor=${musica.cantor != null ? #strings.toLowerCase(musica.cantor) : ''}">
 
                                 <label class="d-flex gap-2 align-items-start mb-0">
                                     <input type="checkbox"
@@ -201,6 +179,11 @@
                                               class="badge text-bg-light ms-1"
                                               th:text="${musica.tom}">
                                         </span>
+
+                                        <div th:if="${musica.cantor != null && !musica.cantor.isBlank()}"
+                                             class="text-muted small"
+                                             th:text="${musica.cantor}">
+                                        </div>
                                     </span>
                                 </label>
                             </div>
@@ -261,8 +244,9 @@
         opcoes.forEach(opcao => {
             const nome = normalizarTexto(opcao.dataset.nome || '');
             const tom = normalizarTexto(opcao.dataset.tom || '');
+            const cantor = normalizarTexto(opcao.dataset.cantor || '');
 
-            const encontrou = nome.includes(termo) || tom.includes(termo);
+            const encontrou = nome.includes(termo) || tom.includes(termo) || cantor.includes(termo);
 
             if (encontrou) {
                 opcao.classList.remove('music-option-hidden');

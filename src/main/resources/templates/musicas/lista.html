@@ -98,29 +98,7 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="${basePath + '/musicas'}">Cifras Igreja</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div id="navbarPrincipal" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" th:href="${basePath + '/musicas'}">Músicas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/musicas/nova'}">Cadastrar Música</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/calendario'}">Calendário</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar('musicas')}"></div>
 
 <main class="container py-4">
 
@@ -177,7 +155,12 @@
                     <tbody>
                     <tr th:each="musica : ${musicas}">
                         <td>
-                            <strong class="music-title" th:text="${musica.nome}"></strong>
+                            <div class="fw-semibold lh-sm" th:text="${musica.nome}"></div>
+
+                            <div th:if="${musica.cantor != null && !musica.cantor.isBlank()}"
+                                 class="text-muted small lh-sm mt-1"
+                                 th:text="${musica.cantor}">
+                            </div>
                         </td>
 
                         <td>

@@ -17,6 +17,8 @@ public class Musica {
     @Column(nullable = false)
     private String nome;
 
+    private String cantor;
+
     private String tom;
 
     private String linkYoutube;
@@ -40,6 +42,10 @@ public class Musica {
 
     public String getNome() {
         return nome;
+    }
+
+    public String getCantor() {
+        return cantor;
     }
 
     public String getTom() {
@@ -68,6 +74,10 @@ public class Musica {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public void setCantor(String cantor) {
+        this.cantor = cantor;
     }
 
     public void setTom(String tom) {

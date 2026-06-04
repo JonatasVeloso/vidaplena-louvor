@@ -11,32 +11,7 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="${basePath + '/musicas'}">Cifras Igreja</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div id="navbarPrincipal" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/musicas'}">Músicas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:classappend="${!modoEdicao} ? ' active' : ''"
-                       th:href="${basePath + '/musicas/nova'}">
-                        Cadastrar Música
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="${basePath + '/calendario'}">Calendário</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar('musicas')}"></div>
 
 <main class="container py-4">
 
@@ -66,12 +41,21 @@
                            id="nome"
                            th:field="*{nome}"
                            class="form-control"
-                           placeholder="Ex: Bondade de Deus">
+                           placeholder="">
 
                     <div class="text-danger small mt-1"
                          th:if="${#fields.hasErrors('nome')}"
                          th:errors="*{nome}">
                     </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="cantor" class="form-label">Cantor</label>
+                    <input type="text"
+                           id="cantor"
+                           th:field="*{cantor}"
+                           class="form-control"
+                           placeholder="">
                 </div>
 
                 <div class="mb-3">
@@ -89,7 +73,7 @@
                            id="linkYoutube"
                            th:field="*{linkYoutube}"
                            class="form-control"
-                           placeholder="https://www.youtube.com/watch?v=...">
+                           placeholder="">
                 </div>
 
                 <div class="mb-3" th:if="${modoEdicao}">
@@ -123,12 +107,28 @@
                            accept="application/pdf">
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <span th:text="${modoEdicao} ? 'Salvar Alterações' : 'Salvar Música'">
-                        Salvar Música
-                    </span>
-                </button>
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${modoEdicao} ? 'Salvar Alterações' : 'Salvar Música'">
+                            Salvar Música
+                        </span>
+                    </button>
 
+                    <button th:if="${modoEdicao}"
+                            type="submit"
+                            class="btn btn-outline-danger"
+                            th:form="'formExcluirMusica'">
+                        Apagar
+                    </button>
+                </div>
+
+            </form>
+
+            <form th:if="${modoEdicao}"
+                  th:id="'formExcluirMusica'"
+                  th:action="${basePath + '/musicas/' + musica.id + '/excluir'}"
+                  method="post"
+                  onsubmit="return confirm('Tem certeza que deseja apagar esta música? Ela também será removida dos repertórios onde foi usada.');">
             </form>
         </div>
     </div>

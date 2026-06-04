@@ -111,4 +111,21 @@ public class MusicaController {
             return "musicas/form";
         }
     }
+
+    @PostMapping("/{id}/excluir")
+    public String excluir(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            musicaService.excluir(id);
+            redirectAttributes.addFlashAttribute("sucesso", "Música apagada com sucesso!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", "Erro ao apagar música. Tente novamente.");
+        }
+
+        return "redirect:" + basePath + "/musicas";
+    }
 }
