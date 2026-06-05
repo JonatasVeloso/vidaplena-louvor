@@ -139,55 +139,80 @@
                             Músicas do dia
                         </label>
 
-                        <span class="text-muted selected-counter">
-                            <span id="contadorSelecionadas">0</span> selecionada(s)
-                        </span>
+                        <span class="text-muted small">
+            <span id="contadorSelecionadas">0</span> selecionada(s)
+        </span>
                     </div>
 
                     <div th:if="${#lists.isEmpty(musicas)}" class="text-muted small">
                         Nenhuma música cadastrada ainda.
                     </div>
 
-                    <div th:if="${!#lists.isEmpty(musicas)}">
+                    <div th:if="${!#lists.isEmpty(musicas)}" class="row g-3">
 
-                        <input type="text"
-                               id="pesquisaMusica"
-                               class="form-control mb-2"
-                               placeholder="Pesquisar música...">
+                        <div class="col-12 col-lg-7">
+                            <input type="text"
+                                   id="pesquisaMusica"
+                                   class="form-control mb-2"
+                                   placeholder="Pesquisar música...">
 
-                        <div id="mensagemSemResultado"
-                             class="alert alert-light border text-muted py-2 mb-2 d-none">
-                            Nenhuma música encontrada.
-                        </div>
+                            <div id="mensagemSemResultado"
+                                 class="alert alert-light border text-muted py-2 mb-2 d-none">
+                                Nenhuma música encontrada.
+                            </div>
 
-                        <div class="music-list" id="listaMusicas">
-                            <div class="music-option"
-                                 th:each="musica : ${musicas}"
-                                 th:attr="data-nome=${#strings.toLowerCase(musica.nome)}, data-tom=${musica.tom != null ? #strings.toLowerCase(musica.tom) : ''}, data-cantor=${musica.cantor != null ? #strings.toLowerCase(musica.cantor) : ''}">
+                            <div class="music-list" id="listaMusicas">
+                                <div class="music-option"
+                                     th:each="musica : ${musicas}"
+                                     th:attr="data-id=${musica.id},
+                              data-nome=${#strings.toLowerCase(musica.nome)},
+                              data-nome-original=${musica.nome},
+                              data-tom=${musica.tom != null ? #strings.toLowerCase(musica.tom) : ''},
+                              data-tom-original=${musica.tom != null ? musica.tom : ''},
+                              data-cantor=${musica.cantor != null ? #strings.toLowerCase(musica.cantor) : ''},
+                              data-cantor-original=${musica.cantor != null ? musica.cantor : ''}">
 
-                                <label class="d-flex gap-2 align-items-start mb-0">
-                                    <input type="checkbox"
-                                           name="musicasIds"
-                                           th:value="${musica.id}"
-                                           th:checked="${#lists.contains(musicasSelecionadas, musica.id)}"
-                                           class="form-check-input mt-1 musica-checkbox">
+                                    <label class="d-flex gap-2 align-items-start mb-0">
+                                        <input type="checkbox"
+                                               name="musicasIds"
+                                               th:value="${musica.id}"
+                                               th:checked="${#lists.contains(musicasSelecionadas, musica.id)}"
+                                               class="form-check-input mt-1 musica-checkbox">
 
-                                    <span>
-                                        <span class="music-option-title" th:text="${musica.nome}"></span>
+                                        <span>
+                            <span class="fw-semibold" th:text="${musica.nome}"></span>
 
-                                        <span th:if="${musica.tom != null && !musica.tom.isBlank()}"
-                                              class="badge text-bg-light ms-1"
-                                              th:text="${musica.tom}">
-                                        </span>
+                            <span th:if="${musica.tom != null && !musica.tom.isBlank()}"
+                                  class="badge text-bg-light ms-1"
+                                  th:text="${musica.tom}">
+                            </span>
 
-                                        <div th:if="${musica.cantor != null && !musica.cantor.isBlank()}"
-                                             class="text-muted small"
-                                             th:text="${musica.cantor}">
-                                        </div>
-                                    </span>
-                                </label>
+                            <div th:if="${musica.cantor != null && !musica.cantor.isBlank()}"
+                                 class="text-muted small lh-sm mt-1"
+                                 th:text="${musica.cantor}">
+                            </div>
+                        </span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="col-12 col-lg-5">
+                            <div class="card border-primary h-100">
+                                <div class="card-header py-2 bg-primary text-white">
+                                    <strong class="small">Músicas selecionadas</strong>
+                                </div>
+
+                                <div class="card-body p-2">
+                                    <div id="mensagemNenhumaSelecionada" class="text-muted small">
+                                        Nenhuma música selecionada.
+                                    </div>
+
+                                    <div id="listaSelecionadas" class="d-flex flex-column gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -228,6 +253,13 @@
     const listaMusicas = document.getElementById('listaMusicas');
     const mensagemSemResultado = document.getElementById('mensagemSemResultado');
     const contadorSelecionadas = document.getElementById('contadorSelecionadas');
+    const listaSelecionadas = document.getElementById('listaSelecionadas');
+    const mensagemNenhumaSelecionada = document.getElementById('mensagemNenhumaSelecionada');
+
+    let draggedElement = null;
+    let placeholder = null;
+    let startY = 0;
+    let currentY = 0;
 
     function normalizarTexto(texto) {
         return texto
@@ -236,15 +268,291 @@
             .replace(/[\u0300-\u036f]/g, '');
     }
 
+    function obterOrdemAtual(musicaId) {
+        const input = document.querySelector(`[name="ordemMusica_${musicaId}"]`);
+
+        if (!input || !input.value) {
+            return null;
+        }
+
+        const valor = parseInt(input.value);
+
+        if (Number.isNaN(valor) || valor <= 0) {
+            return null;
+        }
+
+        return valor;
+    }
+
+    function obterMusicasSelecionadas() {
+        if (!listaMusicas) {
+            return [];
+        }
+
+        const opcoes = Array.from(listaMusicas.querySelectorAll('.music-option'));
+
+        return opcoes
+            .map(opcao => {
+                const checkbox = opcao.querySelector('.musica-checkbox');
+
+                return {
+                    id: opcao.dataset.id,
+                    nome: opcao.dataset.nomeOriginal || '',
+                    tom: opcao.dataset.tomOriginal || '',
+                    cantor: opcao.dataset.cantorOriginal || '',
+                    marcada: checkbox && checkbox.checked,
+                    ordemAtual: obterOrdemAtual(opcao.dataset.id)
+                };
+            })
+            .filter(item => item.marcada)
+            .sort((a, b) => {
+                const ordemA = a.ordemAtual;
+                const ordemB = b.ordemAtual;
+
+                if (ordemA !== null && ordemB !== null) {
+                    return ordemA - ordemB;
+                }
+
+                if (ordemA !== null) {
+                    return -1;
+                }
+
+                if (ordemB !== null) {
+                    return 1;
+                }
+
+                return a.nome.localeCompare(b.nome);
+            });
+    }
+
     function atualizarContadorSelecionadas() {
-        const checkboxes = document.querySelectorAll('.musica-checkbox');
-        const totalSelecionadas = Array.from(checkboxes)
-            .filter(checkbox => checkbox.checked)
-            .length;
+        const totalSelecionadas = obterMusicasSelecionadas().length;
 
         if (contadorSelecionadas) {
             contadorSelecionadas.textContent = totalSelecionadas;
         }
+    }
+
+    function atualizarOrdensHidden() {
+        if (!listaSelecionadas) {
+            return;
+        }
+
+        const itens = Array.from(listaSelecionadas.querySelectorAll('.selected-music-item'));
+
+        itens.forEach((item, index) => {
+            const musicaId = item.dataset.id;
+            const inputOrdem = item.querySelector(`input[name="ordemMusica_${musicaId}"]`);
+
+            if (inputOrdem) {
+                inputOrdem.value = index + 1;
+            }
+        });
+    }
+
+    function criarPlaceholder(altura) {
+        const div = document.createElement('div');
+        div.classList.add('border', 'rounded', 'bg-white');
+        div.style.height = `${altura}px`;
+        div.style.borderStyle = 'dashed';
+        div.style.opacity = '0.8';
+        return div;
+    }
+
+    function encontrarElementoAposPonteiro(container, y) {
+        const itens = [...container.querySelectorAll('.selected-music-item:not(.dragging)')];
+
+        return itens.reduce((maisProximo, item) => {
+            const box = item.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > maisProximo.offset) {
+                return {
+                    offset: offset,
+                    element: item
+                };
+            }
+
+            return maisProximo;
+        }, {
+            offset: Number.NEGATIVE_INFINITY,
+            element: null
+        }).element;
+    }
+
+    function iniciarArraste(event, item) {
+        const handle = event.target.closest('.drag-handle');
+
+        if (!handle) {
+            return;
+        }
+
+        event.preventDefault();
+
+        draggedElement = item;
+        startY = event.clientY;
+        currentY = event.clientY;
+
+        const rect = item.getBoundingClientRect();
+
+        placeholder = criarPlaceholder(rect.height);
+
+        item.classList.add('dragging');
+        item.after(placeholder);
+
+        item.style.position = 'fixed';
+        item.style.left = `${rect.left}px`;
+        item.style.top = `${rect.top}px`;
+        item.style.width = `${rect.width}px`;
+        item.style.zIndex = '9999';
+        item.style.pointerEvents = 'none';
+        item.style.boxShadow = '0 .5rem 1rem rgba(0,0,0,.15)';
+        item.style.transform = 'scale(1.02)';
+
+        handle.setPointerCapture(event.pointerId);
+
+        document.body.style.overflow = 'hidden';
+    }
+
+    function moverArraste(event) {
+        if (!draggedElement || !placeholder || !listaSelecionadas) {
+            return;
+        }
+
+        event.preventDefault();
+
+        currentY = event.clientY;
+        const deslocamento = currentY - startY;
+
+        draggedElement.style.transform = `translateY(${deslocamento}px) scale(1.02)`;
+
+        const elementoAposPonteiro = encontrarElementoAposPonteiro(listaSelecionadas, event.clientY);
+
+        if (elementoAposPonteiro == null) {
+            listaSelecionadas.appendChild(placeholder);
+        } else {
+            listaSelecionadas.insertBefore(placeholder, elementoAposPonteiro);
+        }
+    }
+
+    function finalizarArraste() {
+        if (!draggedElement || !placeholder) {
+            return;
+        }
+
+        placeholder.replaceWith(draggedElement);
+
+        draggedElement.classList.remove('dragging');
+
+        draggedElement.style.position = '';
+        draggedElement.style.left = '';
+        draggedElement.style.top = '';
+        draggedElement.style.width = '';
+        draggedElement.style.zIndex = '';
+        draggedElement.style.pointerEvents = '';
+        draggedElement.style.boxShadow = '';
+        draggedElement.style.transform = '';
+
+        draggedElement = null;
+        placeholder = null;
+
+        document.body.style.overflow = '';
+
+        atualizarOrdensHidden();
+    }
+
+    function atualizarVisualizacaoSelecionadas() {
+        if (!listaSelecionadas || !mensagemNenhumaSelecionada) {
+            return;
+        }
+
+        const selecionadas = obterMusicasSelecionadas();
+
+        listaSelecionadas.innerHTML = '';
+        mensagemNenhumaSelecionada.classList.toggle('d-none', selecionadas.length > 0);
+
+        selecionadas.forEach((musica, index) => {
+            const item = document.createElement('div');
+            item.classList.add('border', 'rounded', 'p-2', 'bg-light', 'selected-music-item');
+            item.dataset.id = musica.id;
+
+            const linha = document.createElement('div');
+            linha.classList.add('d-flex', 'gap-2', 'align-items-start');
+
+            const checkboxSelecionada = document.createElement('input');
+            checkboxSelecionada.type = 'checkbox';
+            checkboxSelecionada.checked = true;
+            checkboxSelecionada.classList.add('form-check-input', 'mt-1');
+            checkboxSelecionada.title = 'Remover música';
+
+            checkboxSelecionada.addEventListener('change', () => {
+                const checkboxOriginal = document.querySelector(`.musica-checkbox[value="${musica.id}"]`);
+
+                if (checkboxOriginal) {
+                    checkboxOriginal.checked = checkboxSelecionada.checked;
+                }
+
+                atualizarTela();
+            });
+
+            const info = document.createElement('div');
+            info.classList.add('flex-grow-1');
+
+            const nome = document.createElement('div');
+            nome.classList.add('fw-semibold', 'small', 'lh-sm', 'text-break');
+            nome.textContent = musica.nome;
+
+            info.appendChild(nome);
+
+            if (musica.tom) {
+                const tom = document.createElement('span');
+                tom.classList.add('badge', 'text-bg-light', 'mt-1');
+                tom.textContent = musica.tom;
+                info.appendChild(tom);
+            }
+
+            if (musica.cantor) {
+                const cantor = document.createElement('div');
+                cantor.classList.add('text-muted', 'small', 'lh-sm', 'mt-1', 'text-break');
+                cantor.textContent = musica.cantor;
+                info.appendChild(cantor);
+            }
+
+            const dragHandle = document.createElement('button');
+            dragHandle.type = 'button';
+            dragHandle.classList.add('btn', 'btn-light', 'btn-sm', 'drag-handle');
+            dragHandle.textContent = '☰';
+            dragHandle.title = 'Arraste para ordenar';
+            dragHandle.style.cursor = 'grab';
+            dragHandle.style.touchAction = 'none';
+            dragHandle.style.userSelect = 'none';
+            dragHandle.style.minWidth = '34px';
+
+            const inputOrdem = document.createElement('input');
+            inputOrdem.type = 'hidden';
+            inputOrdem.name = `ordemMusica_${musica.id}`;
+            inputOrdem.value = index + 1;
+
+            item.addEventListener('pointerdown', event => iniciarArraste(event, item));
+            item.addEventListener('pointermove', moverArraste);
+            item.addEventListener('pointerup', finalizarArraste);
+            item.addEventListener('pointercancel', finalizarArraste);
+
+            linha.appendChild(checkboxSelecionada);
+            linha.appendChild(info);
+            linha.appendChild(dragHandle);
+            linha.appendChild(inputOrdem);
+
+            item.appendChild(linha);
+            listaSelecionadas.appendChild(item);
+        });
+
+        atualizarOrdensHidden();
+    }
+
+    function atualizarTela() {
+        atualizarContadorSelecionadas();
+        atualizarVisualizacaoSelecionadas();
     }
 
     function filtrarMusicas() {
@@ -282,10 +590,10 @@
     }
 
     document.querySelectorAll('.musica-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', atualizarContadorSelecionadas);
+        checkbox.addEventListener('change', atualizarTela);
     });
 
-    atualizarContadorSelecionadas();
+    atualizarTela();
 </script>
 
 </body>

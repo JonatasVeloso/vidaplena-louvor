@@ -11,7 +11,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/calendario")
@@ -42,6 +44,7 @@ public class EventoController {
         model.addAttribute("evento", new Evento());
         model.addAttribute("musicas", musicaService.listar(null));
         model.addAttribute("musicasSelecionadas", List.of());
+        model.addAttribute("ordensSelecionadas", Map.of());
         model.addAttribute("modoEdicao", false);
 
         return "calendario/form";
@@ -52,24 +55,29 @@ public class EventoController {
             @Valid @ModelAttribute("evento") Evento evento,
             BindingResult bindingResult,
             @RequestParam(value = "musicasIds", required = false) List<Long> musicasIds,
+            @RequestParam Map<String, String> parametros,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        Map<Long, Integer> ordensPorMusicaId = extrairOrdens(musicasIds, parametros);
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("musicas", musicaService.listar(null));
             model.addAttribute("musicasSelecionadas", musicasIds != null ? musicasIds : List.of());
+            model.addAttribute("ordensSelecionadas", ordensPorMusicaId);
             model.addAttribute("modoEdicao", false);
             return "calendario/form";
         }
 
         try {
-            eventoService.cadastrar(evento, musicasIds);
+            eventoService.cadastrar(evento, musicasIds, ordensPorMusicaId);
             redirectAttributes.addFlashAttribute("sucesso", "Evento cadastrado com sucesso!");
             return "redirect:" + basePath + "/calendario";
         } catch (RuntimeException e) {
             model.addAttribute("erro", "Erro ao cadastrar evento.");
             model.addAttribute("musicas", musicaService.listar(null));
             model.addAttribute("musicasSelecionadas", musicasIds != null ? musicasIds : List.of());
+            model.addAttribute("ordensSelecionadas", ordensPorMusicaId);
             model.addAttribute("modoEdicao", false);
             return "calendario/form";
         }
@@ -96,9 +104,19 @@ public class EventoController {
                     .map(repertorioMusica -> repertorioMusica.getMusica().getId())
                     .toList();
 
+            Map<Long, Integer> ordensSelecionadas = new HashMap<>();
+
+            evento.getRepertorio().forEach(repertorioMusica ->
+                    ordensSelecionadas.put(
+                            repertorioMusica.getMusica().getId(),
+                            repertorioMusica.getOrdem()
+                    )
+            );
+
             model.addAttribute("evento", evento);
             model.addAttribute("musicas", musicaService.listar(null));
             model.addAttribute("musicasSelecionadas", musicasSelecionadas);
+            model.addAttribute("ordensSelecionadas", ordensSelecionadas);
             model.addAttribute("modoEdicao", true);
 
             return "calendario/form";
@@ -114,24 +132,29 @@ public class EventoController {
             @Valid @ModelAttribute("evento") Evento evento,
             BindingResult bindingResult,
             @RequestParam(value = "musicasIds", required = false) List<Long> musicasIds,
+            @RequestParam Map<String, String> parametros,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        Map<Long, Integer> ordensPorMusicaId = extrairOrdens(musicasIds, parametros);
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("musicas", musicaService.listar(null));
             model.addAttribute("musicasSelecionadas", musicasIds != null ? musicasIds : List.of());
+            model.addAttribute("ordensSelecionadas", ordensPorMusicaId);
             model.addAttribute("modoEdicao", true);
             return "calendario/form";
         }
 
         try {
-            eventoService.editar(id, evento, musicasIds);
+            eventoService.editar(id, evento, musicasIds, ordensPorMusicaId);
             redirectAttributes.addFlashAttribute("sucesso", "Evento atualizado com sucesso!");
             return "redirect:" + basePath + "/calendario/" + id;
         } catch (RuntimeException e) {
             model.addAttribute("erro", "Erro ao editar evento.");
             model.addAttribute("musicas", musicaService.listar(null));
             model.addAttribute("musicasSelecionadas", musicasIds != null ? musicasIds : List.of());
+            model.addAttribute("ordensSelecionadas", ordensPorMusicaId);
             model.addAttribute("modoEdicao", true);
             return "calendario/form";
         }
@@ -152,5 +175,34 @@ public class EventoController {
         }
 
         return "redirect:" + basePath + "/calendario";
+    }
+
+    private Map<Long, Integer> extrairOrdens(List<Long> musicasIds, Map<String, String> parametros) {
+        Map<Long, Integer> ordens = new HashMap<>();
+
+        if (musicasIds == null || musicasIds.isEmpty()) {
+            return ordens;
+        }
+
+        for (Long musicaId : musicasIds) {
+            String chave = "ordemMusica_" + musicaId;
+            String valor = parametros.get(chave);
+
+            if (valor == null || valor.isBlank()) {
+                continue;
+            }
+
+            try {
+                int ordem = Integer.parseInt(valor);
+
+                if (ordem > 0) {
+                    ordens.put(musicaId, ordem);
+                }
+            } catch (NumberFormatException ignored) {
+                // Se a ordem for inválida, o sistema ignora e mantém no final.
+            }
+        }
+
+        return ordens;
     }
 }

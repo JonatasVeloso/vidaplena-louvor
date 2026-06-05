@@ -3,6 +3,7 @@ package br.com.jonatasveloso.cifrasigreja.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,9 +23,11 @@ public class Evento {
     private String nome;
 
     @NotNull(message = "A data é obrigatória")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)
     private LocalDate data;
 
+    @DateTimeFormat(pattern = "HH:mm")
     private LocalTime horario;
 
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
