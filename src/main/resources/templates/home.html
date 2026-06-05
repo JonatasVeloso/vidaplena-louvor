@@ -2,7 +2,7 @@
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Vida Plena</title>
+    <title>Início - Cifras Igreja</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link
@@ -11,53 +11,131 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/">Cifras Igreja</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div id="navbarPrincipal" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="/">Início</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/musicas">Músicas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/musicas/nova">Cadastrar Música</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#">Calendário</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar('inicio')}"></div>
 
 <main class="container py-4">
+
     <div class="card shadow-sm">
         <div class="card-body">
-            <h1 class="h3 mb-3">Sistema de Cifras da Igreja</h1>
 
-            <p class="mb-4">
-                Organize as músicas da igreja, cadastre cifras e monte os repertórios dos cultos por data.
-            </p>
+            <h2 class="h5 mb-3">Próximo Evento</h2>
 
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="/musicas/nova" class="btn btn-primary">
-                    Cadastrar Música
-                </a>
-
-                <a href="/musicas" class="btn btn-outline-primary">
-                    Ver Músicas
-                </a>
+            <div th:if="${proximoEvento == null}" class="text-center text-muted py-4">
+                Nenhum evento futuro cadastrado.
             </div>
+
+            <div th:if="${proximoEvento != null}">
+
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <h3 class="h5 mb-1" th:text="${proximoEvento.nome}">
+                            Culto de Domingo
+                        </h3>
+
+                        <div class="text-muted small">
+                            <span th:text="${#temporals.format(proximoEvento.data, 'dd/MM/yyyy')}"></span>
+
+                            <span th:if="${proximoEvento.horario != null}">
+                                -
+                                <span th:text="${#temporals.format(proximoEvento.horario, 'HH:mm')}"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <a th:href="${basePath + '/calendario/' + proximoEvento.id}"
+                       class="btn btn-outline-primary btn-sm">
+                        Abrir
+                    </a>
+                </div>
+
+                <hr>
+
+                <h4 class="h6 mb-3">Músicas</h4>
+
+                <div th:if="${#lists.isEmpty(proximoEvento.repertorio)}" class="text-muted">
+                    Nenhuma música adicionada a este evento.
+                </div>
+
+                <div th:if="${!#lists.isEmpty(proximoEvento.repertorio)}" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Música</th>
+                            <th>Tom</th>
+                            <th class="text-center">▶</th>
+                            <th class="text-center">♫</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="item : ${proximoEvento.repertorio}">
+                            <td th:text="${item.ordem}"></td>
+
+                            <td style="max-width: 140px;">
+                                <div class="fw-semibold small lh-sm text-break"
+                                     th:text="${item.musica.nome}">
+                                </div>
+
+                                <div th:if="${item.musica.cantor != null && !item.musica.cantor.isBlank()}"
+                                     class="text-muted small lh-sm mt-1 text-break"
+                                     th:text="${item.musica.cantor}">
+                                </div>
+                            </td>
+
+                            <td>
+                                <span th:if="${item.musica.tom != null && !item.musica.tom.isBlank()}"
+                                      class="fw-semibold"
+                                      th:text="${item.musica.tom}">
+                                </span>
+
+                                <span th:if="${item.musica.tom == null || item.musica.tom.isBlank()}"
+                                      class="text-muted">
+                                    -
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <a th:if="${item.musica.linkYoutube != null && !item.musica.linkYoutube.isBlank()}"
+                                   th:href="${item.musica.linkYoutube}"
+                                   target="_blank"
+                                   class="btn btn-outline-danger btn-sm"
+                                   title="Abrir YouTube"
+                                   aria-label="Abrir YouTube">
+                                    ▶
+                                </a>
+
+                                <span th:if="${item.musica.linkYoutube == null || item.musica.linkYoutube.isBlank()}"
+                                      class="text-muted">
+                                    -
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <a th:if="${item.musica.caminhoArquivoCifra != null && !item.musica.caminhoArquivoCifra.isBlank()}"
+                                   th:href="${basePath + item.musica.caminhoArquivoCifra}"
+                                   target="_blank"
+                                   class="btn btn-outline-primary btn-sm"
+                                   title="Abrir cifra"
+                                   aria-label="Abrir cifra">
+                                    ♫
+                                </a>
+
+                                <span th:if="${item.musica.caminhoArquivoCifra == null || item.musica.caminhoArquivoCifra.isBlank()}"
+                                      class="text-muted">
+                                    -
+                                </span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
         </div>
     </div>
+
 </main>
 
 <script

@@ -136,4 +136,21 @@ public class EventoController {
             return "calendario/form";
         }
     }
+
+    @PostMapping("/{id}/excluir")
+    public String excluir(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            eventoService.excluir(id);
+            redirectAttributes.addFlashAttribute("sucesso", "Evento apagado com sucesso!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("erro", "Erro ao apagar evento. Tente novamente.");
+        }
+
+        return "redirect:" + basePath + "/calendario";
+    }
 }

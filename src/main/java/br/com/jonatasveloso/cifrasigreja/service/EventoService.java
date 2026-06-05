@@ -8,8 +8,10 @@ import br.com.jonatasveloso.cifrasigreja.repository.MusicaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EventoService {
@@ -23,7 +25,11 @@ public class EventoService {
     }
 
     public List<Evento> listar() {
-        return eventoRepository.findAllByOrderByDataDescHorarioDesc();
+        return eventoRepository.findAllByOrderByDataAscHorarioAsc();
+    }
+
+    public Optional<Evento> buscarProximoEvento() {
+        return eventoRepository.findFirstByDataGreaterThanEqualOrderByDataAscHorarioAsc(LocalDate.now());
     }
 
     public Evento buscarPorId(Long id) {
@@ -49,6 +55,12 @@ public class EventoService {
         montarRepertorio(eventoSalvo, musicasIds);
 
         return eventoRepository.save(eventoSalvo);
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+        Evento evento = buscarPorId(id);
+        eventoRepository.delete(evento);
     }
 
     private void montarRepertorio(Evento evento, List<Long> musicasIds) {

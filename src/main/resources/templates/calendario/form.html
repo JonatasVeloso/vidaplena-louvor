@@ -191,12 +191,28 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <span th:text="${modoEdicao} ? 'Salvar Alterações' : 'Salvar Evento'">
-                        Salvar Evento
-                    </span>
-                </button>
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${modoEdicao} ? 'Salvar Alterações' : 'Salvar Evento'">
+                            Salvar Evento
+                        </span>
+                    </button>
 
+                    <button th:if="${modoEdicao}"
+                            type="submit"
+                            class="btn btn-outline-danger"
+                            form="formExcluirEvento">
+                        Apagar
+                    </button>
+                </div>
+
+            </form>
+
+            <form th:if="${modoEdicao}"
+                  id="formExcluirEvento"
+                  th:action="${basePath + '/calendario/' + evento.id + '/excluir'}"
+                  method="post"
+                  onsubmit="return confirm('Tem certeza que deseja apagar este evento? O repertório dele também será removido.');">
             </form>
         </div>
     </div>

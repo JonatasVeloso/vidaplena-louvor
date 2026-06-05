@@ -110,8 +110,20 @@
             <a th:href="${basePath + '/calendario/' + evento.id + '/editar'}" class="btn btn-primary btn-sm">
                 Editar
             </a>
+
+            <button type="submit"
+                    class="btn btn-outline-danger btn-sm"
+                    form="formExcluirEvento">
+                Apagar
+            </button>
         </div>
     </div>
+
+    <form id="formExcluirEvento"
+          th:action="${basePath + '/calendario/' + evento.id + '/excluir'}"
+          method="post"
+          onsubmit="return confirm('Tem certeza que deseja apagar este evento? O repertório dele também será removido.');">
+    </form>
 
     <div class="card shadow-sm">
         <div class="card-body">

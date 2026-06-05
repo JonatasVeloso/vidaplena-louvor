@@ -1,20 +1,22 @@
 package br.com.jonatasveloso.cifrasigreja.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import br.com.jonatasveloso.cifrasigreja.service.EventoService;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class HomeController {
 
-    private final String basePath;
+    private final EventoService eventoService;
 
-    public HomeController(@Value("${app.base-path:}") String basePath) {
-        this.basePath = basePath;
+    public HomeController(EventoService eventoService) {
+        this.eventoService = eventoService;
     }
 
     @GetMapping("/")
-    public String home() {
-        return "redirect:" + basePath + "/musicas";
+    public String home(Model model) {
+        model.addAttribute("proximoEvento", eventoService.buscarProximoEvento().orElse(null));
+        return "home";
     }
 }
